@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie','subscription', 'subscription/*', 'subscriptions', 'category', 'category/*', 'categories', 'video', 'video/*', 'videos', 'manager', 'manager/*', 'managers','managers/*', 'department', 'department/*', 'departments','departments/*', 'specialization', 'specialization/*', 'specializations','specializations/*', 'hospital', 'hospital/*', 'hospitals','hospitals/*', 'doctor', 'doctor/*', 'doctors','doctors/*', 'patient', 'patient/*', 'patients','patients/*', 'login', 'logout', 'register','/dashboard/statistics','dashboard/statistics','dashboard'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie','subscription', 'subscription/*', 'subscriptions', 'category', 'category/*', 'categories', 'video', 'video/*', 'videos', 'manager', 'manager/*', 'managers','managers/*', 'department', 'department/*', 'departments','departments/*', 'specialization', 'specialization/*', 'specializations','specializations/*', 'hospital', 'hospital/*', 'hospitals','hospitals/*', 'doctor', 'doctor/*', 'doctors','doctors/*', 'patient', 'patient/*', 'patients','patients/*', 'login', 'logout', 'register','/dashboard/statistics','dashboard/statistics','dashboard','users','users/*','user','user/*'],
 
     'allowed_methods' => ['*'],
 

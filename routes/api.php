@@ -42,15 +42,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // Manager routes for frontend API calls
-    Route::get('/managers', [ManagerController::class, 'getAllManagers'])->middleware('auth:sanctum');
-    Route::post('/managers', [ManagerController::class, 'store'])->middleware('auth:sanctum');
-    Route::put('/managers/{manager}', [ManagerController::class, 'update'])->middleware('auth:sanctum');
-    Route::delete('/managers/{manager}', [ManagerController::class, 'destroy'])->middleware('auth:sanctum');
 
 
     // Patient
 
-    Route::post('/patient', [PatientController::class, 'store'])->middleware('auth:sanctum');
-    Route::put('/patient/{patient}', [PatientController::class, 'update'])->middleware('auth:sanctum');
-    Route::delete('/patient/{patient}', [PatientController::class, 'destroy'])->middleware('auth:sanctum');
+
 });
+
+
+// Route::get('/managers', [ManagerController::class, 'getAllManagers'])->middleware('auth:sanctum');
+// Route::post('/managers', [ManagerController::class, 'store'])->middleware('auth:sanctum');
+// Route::put('/managers/{manager}', [ManagerController::class, 'update'])->middleware('auth:sanctum');
+// Route::delete('/managers/{manager}', [ManagerController::class, 'destroy'])->middleware('auth:sanctum');

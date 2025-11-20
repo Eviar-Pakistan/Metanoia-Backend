@@ -54,6 +54,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'dashboard/statistics',
             '/dashboard/statistics',
             'dashboard',
+            'users',
+            'users/*',
+            'user',
+            'user/*',
             
         ]);
 

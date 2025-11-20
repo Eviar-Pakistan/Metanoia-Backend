@@ -83,7 +83,7 @@ Route::get('/subscription-plan/{encodedUserId}', [SubscriptionController::class,
 Route::get('/subscription/show/{encodedUserId}', [SubscriptionController::class, 'subscription_show'])->name('subscription.show');
 
 
-Route::get('/managers', [ManagerController::class, 'getAllManagers'])->middleware('auth:sanctum');
+// Route::get('/managers', [ManagerController::class, 'getAllManagers'])->middleware('auth:sanctum');
 
 // Department routes for frontend API calls
 Route::get('/departments', [DepartmentController::class, 'getAllDepartments'])->middleware('auth:sanctum');
@@ -110,12 +110,32 @@ Route::put('/doctor/{doctor}', [DoctorController::class, 'update'])->middleware(
 Route::delete('/doctor/{doctor}', [DoctorController::class, 'destroy'])->middleware('auth:sanctum');
 
 // Patient routes for frontend API calls
-Route::get('/patients', [PatientController::class, 'getAllPatients'])->middleware('auth:sanctum');
+
 // Route::post('/patient', [PatientController::class, 'store'])->middleware('auth:sanctum');
 // Route::put('/patient/{patient}', [PatientController::class, 'update'])->middleware('auth:sanctum');
 // Route::delete('/patient/{patient}', [PatientController::class, 'destroy'])->middleware('auth:sanctum');
 
 // Dashboard Statistics API for frontend
 Route::get('/dashboard/statistics', [DashboardController::class, 'getStatistics'])->middleware('auth:sanctum');
+
+// Users API for frontend
+Route::get('/users', [UserController::class, 'getAllUsers'])->middleware('auth:sanctum');
+Route::post('/user', [UserController::class, 'apiStore'])->middleware('auth:sanctum');
+Route::put('/user/{id}', [UserController::class, 'apiUpdate'])->middleware('auth:sanctum');
+Route::post('/user/update/{id}', [UserController::class, 'apiUpdate'])->middleware('auth:sanctum');
+Route::patch('/user/{id}', [UserController::class, 'apiUpdate'])->middleware('auth:sanctum');
+Route::delete('/user/{id}', [UserController::class, 'apiDestroy'])->middleware('auth:sanctum');
+Route::post('/user/delete', [UserController::class, 'apiDestroy'])->middleware('auth:sanctum');
+
+Route::get('/managers', [ManagerController::class, 'getAllManagers'])->middleware('auth:sanctum');
+Route::post('/managers', [ManagerController::class, 'store'])->middleware('auth:sanctum');
+Route::put('/managers/{manager}', [ManagerController::class, 'update'])->middleware('auth:sanctum');
+Route::delete('/managers/{manager}', [ManagerController::class, 'destroy'])->middleware('auth:sanctum');
+
+
+Route::get('/patients', [PatientController::class, 'getAllPatients'])->middleware('auth:sanctum');
+Route::post('/patient', [PatientController::class, 'store'])->middleware('auth:sanctum');
+Route::put('/patient/{patient}', [PatientController::class, 'update'])->middleware('auth:sanctum');
+Route::delete('/patient/{patient}', [PatientController::class, 'destroy'])->middleware('auth:sanctum');
 
 require __DIR__ . '/auth.php';

@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Role;
 use App\Models\Video;
 use App\Models\VideoRunning;
+use App\Models\Patient;
+use App\Models\Manager;
 
 class UserController extends Controller
 {
@@ -190,6 +192,313 @@ class UserController extends Controller
             } else {
                 return response()->json(['message' => 'User not found'], 404);
             }
+        }
+    }
+
+    /**
+     * Get all users for frontend API calls
+     */
+    public function getAllUsers()
+    {
+        try {
+            $users = User::with('role')->get()->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'role_name' => $user->role->name ?? null,
+                    'role' => $user->role ? ['name' => $user->role->name] : null,
+                    'profile_image' => $user->profile_image,
+                    'created_at' => $user->created_at,
+                    'status' => 'Active' // Default status since we don't have this field
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Users retrieved successfully',
+                'data' => $users
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve users',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Store a new user for frontend API calls
+     */
+    public function apiStore(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'first_name' => 'required',
+                'last_name' => 'required',
+                'email' => 'required|email|unique:users',
+                'password' => 'required|min:8',
+                'cpassword' => 'required|same:password',
+                'role_id' => 'required|exists:roles,id',
+                'image' => 'image|mimes:jpeg,png,jpg,gif|nullable',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $user = new User();
+            $user->first_name = $request->first_name;
+            $user->last_name = $request->last_name;
+            $user->email = $request->email;
+            $user->role_id = $request->role_id;
+            $user->password = Hash::make($request->password);
+            
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $filename = time() . '.' . $image->getClientOriginalExtension();
+
+                // Store the file in the public folder
+                $image->move(public_path('assets/user_images'), $filename);
+
+                // Set the relative image path
+                $user->profile_image = 'assets/user_images/' . $filename;
+            }
+            
+            $user->save();
+
+            // Automatically create Patient or Manager profile based on role
+            if ($user->role_id == 5) { // Patient role
+                \App\Models\Patient::create([
+                    'user_id' => $user->id,
+                    'date_of_birth' => null, // Can be updated later
+                    'gender' => null, // Can be updated later  
+                    'address' => null, // Can be updated later
+                    'hospital_id' => null, // Can be assigned later
+                    'doctor_id' => null, // Can be assigned later
+                ]);
+            } elseif ($user->role_id == 4) { // Manager role
+                \App\Models\Manager::create([
+                    'user_id' => $user->id,
+                    'phone_number' => null, // Can be updated later
+                    'joining_date' => now(), // Set current date as joining date
+                ]);
+            }
+
+            // Load the role relationship for the response
+            $user->load('role');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User created successfully',
+                'data' => [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'role_name' => $user->role->name ?? null,
+                    'role' => $user->role ? ['name' => $user->role->name] : null,
+                    'profile_image' => $user->profile_image,
+                    'created_at' => $user->created_at,
+                    'status' => 'Active'
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a user for frontend API calls
+     */
+    public function apiDestroy(Request $request)
+    {
+        try {
+            $userId = $request->input('id');
+            
+            if (!$userId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User ID is required'
+                ], 422);
+            }
+
+            $user = User::find($userId);
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            // Delete profile image if exists
+            if ($user->profile_image) {
+                $imagePath = public_path($user->profile_image);
+                if (file_exists($imagePath)) {
+                    unlink($imagePath);
+                }
+            }
+
+            // Delete associated Patient or Manager profile
+            if ($user->role_id == 5) { // Patient role
+                $user->patient()->delete();
+            } elseif ($user->role_id == 4) { // Manager role  
+                $user->manager()->delete();
+            }
+
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update a user for frontend API calls
+     */
+    public function apiUpdate(Request $request, $id)
+    {
+        try {
+            $user = User::find($id);
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            $rules = [
+                'first_name' => 'required',
+                'last_name' => 'required',
+                'email' => 'required|email|unique:users,email,' . $id,
+                'image' => 'image|mimes:jpeg,png,jpg,gif|nullable',
+                'role_id' => 'required|exists:roles,id',
+            ];
+
+            // Only require password if it's provided
+            if ($request->filled('password')) {
+                $rules['password'] = 'required|min:8';
+                $rules['cpassword'] = 'required|same:password';
+            }
+
+            $validator = Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Store old role for profile management
+            $oldRoleId = $user->role_id;
+
+            // Update user fields
+            $user->first_name = $request->first_name;
+            $user->last_name = $request->last_name;
+            $user->role_id = $request->role_id;
+            $user->email = $request->email;
+            
+            // Only update password if provided
+            if ($request->filled('password')) {
+                $user->password = Hash::make($request->password);
+            }
+            
+            // Handle profile image
+            if ($request->hasFile('image')) {
+                // Delete old image if exists
+                if ($user->profile_image) {
+                    $oldImagePath = public_path($user->profile_image);
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
+                }
+                
+                $image = $request->file('image');
+                $filename = time() . '.' . $image->getClientOriginalExtension();
+                $image->move(public_path('assets/user_images'), $filename);
+                $user->profile_image = 'assets/user_images/' . $filename;
+            }
+            
+            $user->save();
+
+            // Handle role changes - create/delete Patient or Manager profiles
+            if ($oldRoleId != $user->role_id) {
+                // Delete old profile if existed
+                if ($oldRoleId == 5) { // Was Patient
+                    $user->patient()->delete();
+                } elseif ($oldRoleId == 4) { // Was Manager
+                    $user->manager()->delete();
+                }
+
+                // Create new profile if needed
+                if ($user->role_id == 5) { // Now Patient
+                    Patient::create([
+                        'user_id' => $user->id,
+                        'date_of_birth' => null,
+                        'gender' => null,
+                        'address' => null,
+                        'hospital_id' => null,
+                        'doctor_id' => null,
+                    ]);
+                } elseif ($user->role_id == 4) { // Now Manager
+                    \App\Models\Manager::create([
+                        'user_id' => $user->id,
+                        'phone_number' => null,
+                        'joining_date' => now(),
+                    ]);
+                }
+            }
+
+            // Load relationships for response
+            $user->load('role');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User updated successfully',
+                'data' => [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'role_name' => $user->role->name ?? null,
+                    'role' => $user->role ? ['name' => $user->role->name] : null,
+                    'profile_image' => $user->profile_image,
+                    'created_at' => $user->created_at,
+                    'status' => 'Active'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update user',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }
