@@ -14,14 +14,19 @@ Route::post('/reset-password', [AuthenticateController::class, 'resetPassword'])
 // Other routes that do not require authentication can be placed outside the group
 Route::post('/login', [AuthenticateController::class, 'login']);
 Route::post('/signup', [AuthenticateController::class, 'signup']);
+Route::post('/verify-email', [AuthenticateController::class, 'verifyEmail']);
+
+// Public API routes (no authentication required)
+
 
 // Route::post('/subscription', [SubscriptionController::class, 'store']);
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/verify-email', [AuthenticateController::class, 'verifyEmail']);
+   
     Route::post('/verify-otp', [AuthenticateController::class, 'verifyOtp']);
     Route::post('/update-profile', [AuthenticateController::class, 'updateProfile']);
 
     Route::controller(SingleApiController::class)->group(function () {
+        Route::get('/category', [SingleApiController::class, 'getAllCategories']);
         Route::get('category/{id?}', 'category_index');
         Route::get('subscription/{id?}', 'subscription_index');
         Route::get('videos/{id?}', 'video_index');
@@ -41,16 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
 
-    // Manager routes for frontend API calls
-
-
-    // Patient
-
 
 });
 
-
-// Route::get('/managers', [ManagerController::class, 'getAllManagers'])->middleware('auth:sanctum');
-// Route::post('/managers', [ManagerController::class, 'store'])->middleware('auth:sanctum');
-// Route::put('/managers/{manager}', [ManagerController::class, 'update'])->middleware('auth:sanctum');
-// Route::delete('/managers/{manager}', [ManagerController::class, 'destroy'])->middleware('auth:sanctum');

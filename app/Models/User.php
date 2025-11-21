@@ -24,7 +24,9 @@ class User extends Authenticatable
         'password',
         'role_id',
         'profile_image',
-        'subscription_id'
+        'subscription_id',
+        'otp',
+        'otp_expires_at'
     ];
 
     /**

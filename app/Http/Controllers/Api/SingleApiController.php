@@ -59,15 +59,22 @@ class SingleApiController extends Controller
     }
     private function appendUrls($category)
     {
-        // Append full URL to category image
+        // Append correct public URL to category image
         if ($category->image) {
-            $category->image = url("storage/app/public/" . $category->image);
+            // Remove any 'app/public/' prefix if present
+            $imagePath = str_replace('app/public/', '', $category->image);
+            $category->image = url('storage/' . $imagePath);
         }
 
-        // Append full URL to each video's video field
+        // Append correct public URL to each video's video and image fields
         foreach ($category->video as $video) {
             if ($video->video) {
-                $video->video = url("storage/app/public/" . $video->video);
+                $videoPath = str_replace('app/public/', '', $video->video);
+                $video->video = url('storage/' . $videoPath);
+            }
+            if ($video->image) {
+                $imagePath = str_replace('app/public/', '', $video->image);
+                $video->image = url('storage/' . $imagePath);
             }
         }
 
@@ -333,6 +340,33 @@ class SingleApiController extends Controller
 
         // Return the URL
         return response()->json(['url' => $url]);
+    }
+
+    /**
+     * Get all categories without authentication or subscription filtering
+     */
+    public function getAllCategories()
+    {
+        try {
+            $categories = Category::all();
+
+            // Transform categories to include full image URLs
+            $categories = $categories->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'description' => $category->description ?? '',
+                    'image' => $category->image ? url('storage/' . $category->image) : null,
+                    'created_at' => $category->created_at,
+                    'updated_at' => $category->updated_at,
+                ];
+            });
+
+            return $this->successWithData($categories, "All categories retrieved successfully", 200);
+
+        } catch (\Exception $e) {
+            return $this->fail('Failed to fetch categories', [$e->getMessage()], 500);
+        }
     }
 
 }
