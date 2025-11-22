@@ -22,7 +22,7 @@ return [
     // For production, replace with your actual frontend domains
     'allowed_origins' => env('CORS_ALLOWED_ORIGINS') 
         ? explode(',', env('CORS_ALLOWED_ORIGINS'))
-        : ['http://192.168.100.176:8080', 'http://localhost:8080', 'http://127.0.0.1:8080','http://16.16.205.20', ],
+        : ['http://192.168.100.176:8080', 'http://localhost:8080', 'http://127.0.0.1:8080','http://16.16.205.20', "*"],
 
     'allowed_origins_patterns' => [],
 

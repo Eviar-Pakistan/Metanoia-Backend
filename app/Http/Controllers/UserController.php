@@ -201,7 +201,7 @@ class UserController extends Controller
     public function getAllUsers()
     {
         try {
-            $users = User::with('role')->get()->map(function ($user) {
+            $users = User::with(['role', 'subscription'])->get()->map(function ($user) {
                 return [
                     'id' => $user->id,
                     'first_name' => $user->first_name,
@@ -211,7 +211,14 @@ class UserController extends Controller
                     'role' => $user->role ? ['name' => $user->role->name] : null,
                     'profile_image' => $user->profile_image,
                     'created_at' => $user->created_at,
-                    'status' => 'Active' // Default status since we don't have this field
+                    'status' => 'Active', // Default status since we don't have this field
+                    'subscription' => $user->subscription ? [
+                        'id' => $user->subscription->id,
+                        'name' => $user->subscription->name,
+                        'description' => $user->subscription->description ?? '',
+                        'created_at' => $user->subscription->created_at,
+                        'updated_at' => $user->subscription->updated_at,
+                    ] : null
                 ];
             });
 
@@ -422,12 +429,17 @@ class UserController extends Controller
             $user->last_name = $request->last_name;
             $user->role_id = $request->role_id;
             $user->email = $request->email;
-            
+
+            // Update subscription_id if provided
+            if ($request->has('subscription_id')) {
+                $user->subscription_id = $request->subscription_id;
+            }
+
             // Only update password if provided
             if ($request->filled('password')) {
                 $user->password = Hash::make($request->password);
             }
-            
+
             // Handle profile image
             if ($request->hasFile('image')) {
                 // Delete old image if exists
@@ -437,13 +449,13 @@ class UserController extends Controller
                         unlink($oldImagePath);
                     }
                 }
-                
+
                 $image = $request->file('image');
                 $filename = time() . '.' . $image->getClientOriginalExtension();
                 $image->move(public_path('assets/user_images'), $filename);
                 $user->profile_image = 'assets/user_images/' . $filename;
             }
-            
+
             $user->save();
 
             // Handle role changes - create/delete Patient or Manager profiles
